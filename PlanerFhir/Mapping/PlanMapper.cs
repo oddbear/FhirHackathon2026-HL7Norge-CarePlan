@@ -119,6 +119,37 @@ public sealed class PlanMapper(Microsoft.Extensions.Options.IOptions<FhirOptions
         return pr;
     }
 
+    // ---- FHIR -> upstream (create) -------------------------------------------------------------
+
+    /// <summary>Reads a CarePlan (title, description = personal goals, subject.identifier = NIN, note = comment,
+    /// contained ServiceRequests = zones) into an upstream create request. Returns the problems found, if any.</summary>
+    public (CreatePlanRequest? Request, List<string> Errors) ToCreateRequest(CarePlan cp)
+    {
+        var errors = new List<string>();
+        var nin = cp.Subject?.Identifier?.Value;
+        if (string.IsNullOrWhiteSpace(nin)) errors.Add("CarePlan.subject.identifier.value (national identity number) is required.");
+        if (string.IsNullOrWhiteSpace(cp.Title)) errors.Add("CarePlan.title is required.");
+
+        var zones = new List<Zone>();
+        foreach (var sr in cp.Contained.OfType<ServiceRequest>())
+        {
+            var level = sr.Category.SelectMany(c => c.Coding).Select(c => c.Code?.ToLowerInvariant())
+                .FirstOrDefault(c => c is "green" or "yellow" or "red");
+            if (level is null) { errors.Add($"ServiceRequest {sr.Id}: category.coding.code must be green, yellow or red."); continue; }
+            var action = sr.Code?.Concept?.Text;
+            var condition = sr.Reason.FirstOrDefault()?.Concept?.Text;
+            if (string.IsNullOrWhiteSpace(action) || string.IsNullOrWhiteSpace(condition))
+            { errors.Add($"ServiceRequest {sr.Id}: code.text (action) and reason.concept.text (condition) are required."); continue; }
+            zones.Add(new Zone { Level = level, Condition = condition, Action = action });
+        }
+        if (errors.Count > 0) return (null, errors);
+
+        return (new CreatePlanRequest(
+            new ClinicalContent { Title = cp.Title!, PersonalGoals = cp.Description, Zones = zones },
+            cp.Note.FirstOrDefault()?.Text,
+            new Subject { Nin = nin! }), errors);
+    }
+
     // ---- CarePlan ----------------------------------------------------------------------------
 
     private CarePlan MapCarePlan(Plan p, Patient patient, Practitioner? author)

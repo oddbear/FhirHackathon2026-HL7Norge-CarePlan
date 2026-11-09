@@ -68,6 +68,31 @@ GET {{host}}/PlanDefinition
 ###
 GET {{host}}/PlanDefinition/personal-plan
 
+### Create a plan. Zones are contained ServiceRequests (category code green|yellow|red, code.text = action, reason.concept.text = condition)
+POST {{host}}/CarePlan
+Content-Type: application/fhir+json
+
+{
+  "resourceType": "CarePlan",
+  "status": "draft",
+  "intent": "plan",
+  "title": "Egenbehandlingsplan astma",
+  "description": "Delta i fotballtrening",
+  "subject": { "identifier": { "system": "urn:oid:2.16.578.1.12.4.1.4.1", "value": "{{nin}}" } },
+  "note": [ { "text": "Første utkast" } ],
+  "contained": [
+    {
+      "resourceType": "ServiceRequest", "id": "z1", "status": "draft", "intent": "plan",
+      "subject": { "display": "pasient" },
+      "category": [ { "coding": [ { "code": "green" } ] } ],
+      "code": { "concept": { "text": "Vanlig medisinering" } },
+      "reason": [ { "concept": { "text": "Stabil pust" } } ]
+    }
+  ]
+}
+
+###
+
 ### Operations on a CarePlan (state changes). revision and version are required by the upstream (defaults to the current values when omitted).
 POST {{host}}/CarePlan/{{plan}}/$activate
 Content-Type: application/fhir+json

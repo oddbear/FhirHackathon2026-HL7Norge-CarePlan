@@ -72,6 +72,20 @@ structure: personal goals plus a green, yellow and red zone, each with a conditi
 The upstream has no template resource, so this is not read from it. Every `CarePlan` references it in
 `instantiatesCanonical`. No patient parameter is needed, and there is no upstream call.
 
+## Create a plan
+
+`POST /fhir/CarePlan` with a CarePlan body creates a plan upstream (`POST /plan`) and returns `201` with the CarePlan and a `Location` header.
+
+| FHIR | Upstream |
+|---|---|
+| `title` (required) | `clinical_content.title` |
+| `description` | `clinical_content.personal_goals` |
+| `subject.identifier.value` (required, NIN) | `subject.nin` |
+| `note[0].text` | `comment` |
+| contained `ServiceRequest`: `category.coding.code` green/yellow/red, `code.text`, `reason.concept.text` | `clinical_content.zones[]` level, action, condition |
+
+Invalid content gives `422`, upstream 400/409/422 map to the same status, other upstream errors to `502`. In mock mode the plan is kept in memory only.
+
 ## Operations (state changes)
 
 The three upstream commands are exposed as FHIR operations on `CarePlan`, not as writes to `Task`: they are

@@ -174,6 +174,45 @@ public static class FhirEndpoints
             return found.Result ?? Send(found.Resource!, etag: found.Resource!.Meta?.VersionId);
         });
 
+        // ---- create: POST /fhir/CarePlan (body: CarePlan; zones as contained ServiceRequests) -------------
+        // Creates a plan upstream (POST /plan) and returns 201 with the mapped CarePlan.
+        g.MapPost("/CarePlan", async (HttpContext ctx, IPlanClient client, PlanMapper mapper, CancellationToken ct) =>
+        {
+            CarePlan? input;
+            try
+            {
+                using var reader = new StreamReader(ctx.Request.Body);
+                input = System.Text.Json.JsonSerializer.Deserialize<CarePlan>(await reader.ReadToEndAsync(ct), FhirJson);
+            }
+            catch (Exception e) when (e is Hl7.Fhir.Serialization.DeserializationFailedException or System.Text.Json.JsonException or InvalidCastException or NotSupportedException)
+            {
+                return Outcome(400, OperationOutcome.IssueType.Invalid, "Body must be a FHIR CarePlan resource: " + e.Message);
+            }
+            if (input is null) return Outcome(400, OperationOutcome.IssueType.Invalid, "Body must be a FHIR CarePlan resource.");
+
+            var (request, errors) = mapper.ToCreateRequest(input);
+            if (request is null) return Outcome(422, OperationOutcome.IssueType.BusinessRule, string.Join(" ", errors));
+
+            try
+            {
+                var created = await client.CreateAsync(request, ct);
+                var plan = await client.GetAsync(created.Id, ct);
+                if (plan is null) return Outcome(502, OperationOutcome.IssueType.Transient, "Plan was created but could not be read back.");
+                ctx.Response.Headers.Location = $"{BaseUrl(ctx)}/CarePlan/{plan.Id}";
+                return Send(mapper.Map(plan).CarePlan, 201, etag: plan.Version.ToString());
+            }
+            catch (UpstreamException e)
+            {
+                return e.Status switch
+                {
+                    400 => Outcome(400, OperationOutcome.IssueType.Invalid, e.Message),
+                    409 => Outcome(409, OperationOutcome.IssueType.Conflict, e.Message),
+                    422 => Outcome(422, OperationOutcome.IssueType.BusinessRule, e.Message),
+                    _ => Outcome(502, OperationOutcome.IssueType.Transient, e.Message),
+                };
+            }
+        });
+
         // ---- operations: state changes on a plan, POST /fhir/CarePlan/{id}/$activate|$approve|$publish ----
         // Body (optional): Parameters with comment (string), revision (integer, optimistic lock; defaults to the
         // current revision), version (integer; defaults to the current plan version).
@@ -349,6 +388,12 @@ public static class FhirEndpoints
             SearchParam = sp.Select(s => new CapabilityStatement.SearchParamComponent { Name = s.name, Type = s.t }).ToList(),
         };
 
+        CapabilityStatement.ResourceComponent WithCreate(CapabilityStatement.ResourceComponent r)
+        {
+            r.Interaction.Add(new() { Code = CapabilityStatement.TypeRestfulInteraction.Create });
+            return r;
+        }
+
         var patient = ("patient", SearchParamType.Token);
         var status = ("status", SearchParamType.Token);
         var lastUpdated = ("_lastUpdated", SearchParamType.Date);
@@ -374,7 +419,7 @@ public static class FhirEndpoints
                     ],
                     Resource =
                     [
-                        Res("CarePlan", patient, status, lastUpdated, ("published", SearchParamType.Token)),
+                        WithCreate(Res("CarePlan", patient, status, lastUpdated, ("published", SearchParamType.Token))),
                         Res("Composition", patient, status, lastUpdated),
                         Res("ServiceRequest", patient, status, lastUpdated),
                         Res("Task", patient, status, lastUpdated),

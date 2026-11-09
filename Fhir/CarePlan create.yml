@@ -1,0 +1,51 @@
+info:
+  name: CarePlan create
+  type: http
+  seq: 15
+
+http:
+  method: POST
+  url: http://localhost:5080/fhir/CarePlan
+  headers:
+    - name: Content-Type
+      value: application/fhir+json
+  body:
+    type: json
+    data: |-
+      {
+        "resourceType": "CarePlan",
+        "status": "draft",
+        "intent": "plan",
+        "title": "Egenbehandlingsplan astma",
+        "description": "Delta i fotballtrening",
+        "subject": {
+          "identifier": { "system": "urn:oid:2.16.578.1.12.4.1.4.1", "value": "18679135941" }
+        },
+        "note": [ { "text": "Første utkast" } ],
+        "contained": [
+          {
+            "resourceType": "ServiceRequest", "id": "z1", "status": "draft", "intent": "plan",
+            "subject": { "display": "pasient" },
+            "category": [ { "coding": [ { "code": "green" } ] } ],
+            "code": { "concept": { "text": "Vanlig medisinering" } },
+            "reason": [ { "concept": { "text": "Stabil pust" } } ]
+          },
+          {
+            "resourceType": "ServiceRequest", "id": "z2", "status": "draft", "intent": "plan",
+            "subject": { "display": "pasient" },
+            "category": [ { "coding": [ { "code": "red" } ] } ],
+            "code": { "concept": { "text": "Ring 113" } },
+            "reason": [ { "concept": { "text": "Kan ikke snakke i hele setninger" } } ]
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+docs: Creates a plan (upstream POST /plan). Zones are contained ServiceRequests with category code green, yellow or red, code.text as action and reason.concept.text as condition. Returns 201 with the CarePlan.

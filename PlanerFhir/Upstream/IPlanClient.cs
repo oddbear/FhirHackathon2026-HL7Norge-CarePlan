@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace PlanerFhir.Upstream;
 
 public interface IPlanClient
@@ -7,12 +9,21 @@ public interface IPlanClient
     Task<IReadOnlyList<HistoryEvent>> GetHistoryAsync(string id, CancellationToken ct);
     Task<Plan?> GetVersionAsync(string id, int version, CancellationToken ct);
 
+    /// <summary>POST /plan. Returns the new plan id and revision.</summary>
+    Task<CommandResult> CreateAsync(CreatePlanRequest request, CancellationToken ct);
+
     /// <summary>POST /plan/:id/{command}; command is "$activate", "$approval-given" or "$mark-published".</summary>
     Task<CommandResult> ExecuteAsync(string id, string command, CommandRequest request, CancellationToken ct);
 }
 
 /// <summary>Body of the upstream state-change commands. Version is only sent when set.</summary>
 public sealed record CommandRequest(string? Comment, int Revision, int? Version);
+
+/// <summary>Body of POST /plan.</summary>
+public sealed record CreatePlanRequest(
+    [property: JsonPropertyName("clinical_content")] ClinicalContent ClinicalContent,
+    [property: JsonPropertyName("comment")] string? Comment,
+    [property: JsonPropertyName("subject")] Subject Subject);
 
 /// <summary>Upstream response: the plan id and its new revision.</summary>
 public sealed record CommandResult(string Id, int Revision);
