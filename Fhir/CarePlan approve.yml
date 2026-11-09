@@ -20,7 +20,9 @@ http:
       {
         "resourceType": "Parameters",
         "parameter": [
-          { "name": "comment", "valueString": "Godkjent" }
+          { "name": "comment", "valueString": "Godkjent" },
+          { "name": "revision", "valueInteger": 1 },
+          { "name": "version", "valueInteger": 1 }
         ]
       }
   auth: inherit

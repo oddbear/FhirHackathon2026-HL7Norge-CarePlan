@@ -20,7 +20,9 @@ http:
       {
         "resourceType": "Parameters",
         "parameter": [
-          { "name": "comment", "valueString": "Aktiverer planen" }
+          { "name": "comment", "valueString": "Aktiverer planen" },
+          { "name": "revision", "valueInteger": 1 },
+          { "name": "version", "valueInteger": 1 }
         ]
       }
   auth: inherit

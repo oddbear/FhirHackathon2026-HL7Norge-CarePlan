@@ -176,13 +176,13 @@ public static class FhirEndpoints
 
         // ---- operations: state changes on a plan, POST /fhir/CarePlan/{id}/$activate|$approve|$publish ----
         // Body (optional): Parameters with comment (string), revision (integer, optimistic lock; defaults to the
-        // current revision), version (integer; defaults to the current plan version for $activate/$approve).
+        // current revision), version (integer; defaults to the current plan version).
         // Success returns the updated CarePlan. Upstream 400/404/409/422 map to 400/404/409/422.
-        foreach (var (name, command, sendVersion) in new[]
+        foreach (var (name, command) in new[]
                  {
-                     ("$activate", PlanCommands.Activate, true),
-                     ("$approve", PlanCommands.Approve, true),
-                     ("$publish", PlanCommands.Publish, false),
+                     ("$activate", PlanCommands.Activate),
+                     ("$approve", PlanCommands.Approve),
+                     ("$publish", PlanCommands.Publish),
                  })
         {
             g.MapPost($"/CarePlan/{{id}}/{name}", async (string id, HttpContext ctx, IPlanClient client, PlanMapper mapper, CancellationToken ct) =>
@@ -211,7 +211,7 @@ public static class FhirEndpoints
                     if (current is null) return Outcome(404, OperationOutcome.IssueType.NotFound, $"CarePlan/{id} not found.");
 
                     await client.ExecuteAsync(id, command,
-                        new CommandRequest(comment, revision ?? current.Revision, version ?? (sendVersion ? current.Version : null)), ct);
+                        new CommandRequest(comment, revision ?? current.Revision, version ?? current.Version), ct);
 
                     var updated = await client.GetAsync(id, ct) ?? current;
                     return Send(mapper.Map(updated).CarePlan, etag: updated.Version.ToString());

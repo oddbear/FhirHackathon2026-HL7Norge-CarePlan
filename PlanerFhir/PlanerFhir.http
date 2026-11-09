@@ -68,7 +68,7 @@ GET {{host}}/PlanDefinition
 ###
 GET {{host}}/PlanDefinition/personal-plan
 
-### Operations on a CarePlan (state changes). Body is optional: comment, revision (defaults to current), version.
+### Operations on a CarePlan (state changes). revision and version are required by the upstream (defaults to the current values when omitted).
 POST {{host}}/CarePlan/{{plan}}/$activate
 Content-Type: application/fhir+json
 
@@ -76,7 +76,8 @@ Content-Type: application/fhir+json
   "resourceType": "Parameters",
   "parameter": [
     { "name": "comment", "valueString": "Aktiverer planen" },
-    { "name": "revision", "valueInteger": 3 }
+    { "name": "revision", "valueInteger": 3 },
+    { "name": "version", "valueInteger": 1 }
   ]
 }
 
@@ -84,10 +85,10 @@ Content-Type: application/fhir+json
 POST {{host}}/CarePlan/{{plan}}/$approve
 Content-Type: application/fhir+json
 
-{ "resourceType": "Parameters", "parameter": [ { "name": "comment", "valueString": "Godkjent" } ] }
+{ "resourceType": "Parameters", "parameter": [ { "name": "comment", "valueString": "Godkjent" }, { "name": "revision", "valueInteger": 3 }, { "name": "version", "valueInteger": 1 } ] }
 
 ###
 POST {{host}}/CarePlan/{{plan}}/$publish
 Content-Type: application/fhir+json
 
-{ "resourceType": "Parameters", "parameter": [ { "name": "comment", "valueString": "Publisert til kjernejournal" } ] }
+{ "resourceType": "Parameters", "parameter": [ { "name": "comment", "valueString": "Publisert til kjernejournal" }, { "name": "revision", "valueInteger": 3 }, { "name": "version", "valueInteger": 1 } ] }
