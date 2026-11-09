@@ -1,0 +1,63 @@
+@host = http://localhost:5080/fhir
+@nin = 18727094136
+@plan = 8526cf24-a37a-4b3f-b59c-a4479b75f901
+
+### Capability statement
+GET {{host}}/metadata
+
+### Search CarePlans (+ Patient, + ServiceRequests per zone)
+GET {{host}}/CarePlan?patient={{nin}}&_include=CarePlan:subject&_revinclude=ServiceRequest:based-on
+
+### Only active plans (maps to upstream is_active=true)
+GET {{host}}/CarePlan?patient={{nin}}&status=active
+
+### Using the identifier form
+GET {{host}}/CarePlan?patient:identifier=urn:oid:2.16.578.1.12.4.1.4.1|{{nin}}
+
+### Plans changed since (maps to upstream updated_since)
+GET {{host}}/CarePlan?patient={{nin}}&_lastUpdated=ge2026-09-01T00:00:00Z
+
+### Only published plans
+GET {{host}}/CarePlan?patient={{nin}}&published=true
+
+### Search Compositions (plan documents with one section per zone)
+GET {{host}}/Composition?patient={{nin}}
+
+### Search ServiceRequests (one per zone; priority routine/urgent/asap)
+GET {{host}}/ServiceRequest?patient={{nin}}
+
+### Search Tasks (approvals + publications)
+GET {{host}}/Task?patient={{nin}}
+
+### Search Provenance (who changed the plan)
+GET {{host}}/Provenance?patient={{nin}}
+
+### CarePlan with its approval/publication Tasks and Composition
+GET {{host}}/CarePlan?patient={{nin}}&_revinclude=Task:focus&_revinclude=Composition:entry&_revinclude=Provenance:target
+
+### Read
+GET {{host}}/CarePlan/{{plan}}
+
+### Audit events for a plan (upstream /history) and version read
+GET {{host}}/Provenance?target=CarePlan/{{plan}}
+
+###
+GET {{host}}/CarePlan/{{plan}}/_history/1
+
+### Paging
+GET {{host}}/CarePlan?patient={{nin}}&_count=20&_offset=20
+
+### FHIR document Bundle
+GET {{host}}/Composition/{{plan}}/$document
+
+### Everything derived from the plan
+GET {{host}}/CarePlan/{{plan}}/$everything
+
+### Derived resource reads
+GET {{host}}/ServiceRequest/{{plan}}-zone-3
+
+###
+GET {{host}}/Task/{{plan}}-approval-2
+
+###
+GET {{host}}/Provenance/{{plan}}-rev-2
