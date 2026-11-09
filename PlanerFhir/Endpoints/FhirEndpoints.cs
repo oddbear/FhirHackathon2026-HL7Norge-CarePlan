@@ -1,4 +1,5 @@
 using Hl7.Fhir.Model;
+using Hl7.Fhir.Serialization;
 using PlanerFhir.Mapping;
 using PlanerFhir.Upstream;
 using static PlanerFhir.Endpoints.FhirResults;
@@ -18,6 +19,9 @@ public static class FhirEndpoints
             ["Task"] = r => r.Tasks,
             ["Provenance"] = r => r.Provenance is null ? [] : [r.Provenance],
         };
+
+    private static readonly System.Text.Json.JsonSerializerOptions FhirJson =
+        new System.Text.Json.JsonSerializerOptions().ForFhir(ModelInfo.ModelInspector);
 
     public static void MapFhir(this WebApplication app)
     {
@@ -170,6 +174,62 @@ public static class FhirEndpoints
             return found.Result ?? Send(found.Resource!, etag: found.Resource!.Meta?.VersionId);
         });
 
+        // ---- operations: state changes on a plan, POST /fhir/CarePlan/{id}/$activate|$approve|$publish ----
+        // Body (optional): Parameters with comment (string), revision (integer, optimistic lock; defaults to the
+        // current revision), version (integer; defaults to the current plan version for $activate/$approve).
+        // Success returns the updated CarePlan. Upstream 400/404/409/422 map to 400/404/409/422.
+        foreach (var (name, command, sendVersion) in new[]
+                 {
+                     ("$activate", PlanCommands.Activate, true),
+                     ("$approve", PlanCommands.Approve, true),
+                     ("$publish", PlanCommands.Publish, false),
+                 })
+        {
+            g.MapPost($"/CarePlan/{{id}}/{name}", async (string id, HttpContext ctx, IPlanClient client, PlanMapper mapper, CancellationToken ct) =>
+            {
+                Parameters? input = null;
+                if (ctx.Request.ContentLength is > 0 || ctx.Request.Headers.ContainsKey("Transfer-Encoding"))
+                {
+                    try
+                    {
+                        using var reader = new StreamReader(ctx.Request.Body);
+                        var text = await reader.ReadToEndAsync(ct);
+                        if (!string.IsNullOrWhiteSpace(text)) input = System.Text.Json.JsonSerializer.Deserialize<Parameters>(text, FhirJson);
+                    }
+                    catch (Exception e) when (e is Hl7.Fhir.Serialization.DeserializationFailedException or System.Text.Json.JsonException or InvalidCastException or NotSupportedException)
+                    {
+                        return Outcome(400, OperationOutcome.IssueType.Invalid, "Body must be a FHIR Parameters resource: " + e.Message);
+                    }
+                }
+                var comment = (input?.GetSingleValue<FhirString>("comment"))?.Value;
+                var revision = input?.GetSingleValue<Integer>("revision")?.Value;
+                var version = input?.GetSingleValue<Integer>("version")?.Value;
+
+                try
+                {
+                    var current = await client.GetAsync(id, ct);
+                    if (current is null) return Outcome(404, OperationOutcome.IssueType.NotFound, $"CarePlan/{id} not found.");
+
+                    await client.ExecuteAsync(id, command,
+                        new CommandRequest(comment, revision ?? current.Revision, version ?? (sendVersion ? current.Version : null)), ct);
+
+                    var updated = await client.GetAsync(id, ct) ?? current;
+                    return Send(mapper.Map(updated).CarePlan, etag: updated.Version.ToString());
+                }
+                catch (UpstreamException e)
+                {
+                    return e.Status switch
+                    {
+                        400 => Outcome(400, OperationOutcome.IssueType.Invalid, e.Message),
+                        404 => Outcome(404, OperationOutcome.IssueType.NotFound, e.Message),
+                        409 => Outcome(409, OperationOutcome.IssueType.Conflict, e.Message),
+                        422 => Outcome(422, OperationOutcome.IssueType.BusinessRule, e.Message),
+                        _ => Outcome(502, OperationOutcome.IssueType.Transient, e.Message),
+                    };
+                }
+            });
+        }
+
         // ---- $document: FHIR document Bundle (Composition + everything it references) -------------
         g.MapGet("/Composition/{id}/$document", async (string id, HttpContext ctx, IPlanClient client, PlanMapper mapper, CancellationToken ct) =>
         {
@@ -306,6 +366,12 @@ public static class FhirEndpoints
                 new CapabilityStatement.RestComponent
                 {
                     Mode = CapabilityStatement.RestfulCapabilityMode.Server,
+                    Operation =
+                    [
+                        new() { Name = "activate", Definition = "http://localhost/OperationDefinition/careplan-activate" },
+                        new() { Name = "approve", Definition = "http://localhost/OperationDefinition/careplan-approve" },
+                        new() { Name = "publish", Definition = "http://localhost/OperationDefinition/careplan-publish" },
+                    ],
                     Resource =
                     [
                         Res("CarePlan", patient, status, lastUpdated, ("published", SearchParamType.Token)),

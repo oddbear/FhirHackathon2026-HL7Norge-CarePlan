@@ -13,19 +13,19 @@ http:
     data: |-
       {
         "clinical_content": {
-          "personal_goals": "",
-          "title": "",
+          "personal_goals": "personal_goals",
+          "title": "title",
           "zones": [
             {
-              "action": "",
-              "condition": "",
+              "action": "action",
+              "condition": "conditio",
               "level": "green"
             }
           ]
         },
-        "comment": "",
+        "comment": "comment",
         "subject": {
-          "nin": ""
+          "nin": "01660188378"
         }
       }
   auth: inherit

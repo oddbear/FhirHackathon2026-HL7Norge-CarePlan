@@ -10,7 +10,7 @@ http:
   url: "{{baseUrl}}/plan/:id/$latest"
   params:
     - name: id
-      value: ""
+      value: 602c59a6-4be9-46b8-a123-502c5e226b6b
       type: path
       description: Plan ID
   auth: inherit

@@ -71,3 +71,26 @@ otherwise `draft`. Approval status `given` (also `approved`) maps to a completed
 structure: personal goals plus a green, yellow and red zone, each with a condition and a `ServiceRequest` action.
 The upstream has no template resource, so this is not read from it. Every `CarePlan` references it in
 `instantiatesCanonical`. No patient parameter is needed, and there is no upstream call.
+
+## Operations (state changes)
+
+The three upstream commands are exposed as FHIR operations on `CarePlan`, not as writes to `Task`: they are
+commands with their own rules, not edits of a resource, and the upstream decides the resulting state. The `Task`
+resources stay read-only and show the result.
+
+| Operation | Upstream call | Sends `version` |
+|---|---|---|
+| `POST /fhir/CarePlan/{id}/$activate` | `POST /plan/:id/$activate` | yes |
+| `POST /fhir/CarePlan/{id}/$approve` | `POST /plan/:id/$approval-given` | yes |
+| `POST /fhir/CarePlan/{id}/$publish` | `POST /plan/:id/$mark-published` | no |
+
+The optional body is a `Parameters` resource with `comment` (string), `revision` (integer) and `version`
+(integer). The upstream uses `revision` as an optimistic lock. If you leave it out, the current revision is read
+first and used, so the lock does not protect against concurrent edits unless you send it. `version` defaults to
+the current plan version. A successful call returns the updated `CarePlan`.
+
+Upstream errors keep their meaning: 400 → 400 `invalid`, 404 → 404, 409 → 409 `conflict` (stale revision),
+422 → 422 `business-rule`, anything else → 502. The caller's `Authorization` header is forwarded.
+
+In Mock mode the operations check the revision and succeed, but they do not change the sample data.
+Reject, request approval, unpublish and deactivate are not exposed yet.

@@ -87,6 +87,15 @@ public sealed class MockPlanClient : IPlanClient
         return Task.FromResult(ev);
     }
 
+    // Offline stub: checks the revision like the real API would, but does not change the sample data.
+    public Task<CommandResult> ExecuteAsync(string id, string command, CommandRequest r, CancellationToken ct)
+    {
+        var plan = All.FirstOrDefault(p => p.Id == id) ?? throw new UpstreamException("Plan not found", 404, "not_found");
+        if (r.Revision != plan.Revision)
+            throw new UpstreamException($"Revision mismatch: expected {plan.Revision}, got {r.Revision}", 409, "revision_conflict");
+        return Task.FromResult(new CommandResult(id, plan.Revision + 1));
+    }
+
     public Task<Plan?> GetVersionAsync(string id, int version, CancellationToken ct) =>
         Task.FromResult(version == 1 && id == ActivePlanId ? ActiveV1 : All.FirstOrDefault(p => p.Id == id && p.Version == version));
 }

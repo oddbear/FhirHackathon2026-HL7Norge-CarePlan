@@ -10,15 +10,15 @@ http:
   url: "{{baseUrl}}/plan/:id/$mark-published"
   params:
     - name: id
-      value: ""
+      value: 083fb223-c63a-4721-8dd2-ebc8ca0723bc
       type: path
       description: Plan ID
   body:
     type: json
     data: |-
       {
-        "comment": "",
-        "revision": 0,
+        "comment": "comment 4",
+        "revision": 4,
         "version": 0
       }
   auth: inherit

@@ -10,16 +10,16 @@ http:
   url: "{{baseUrl}}/plan/:id/$activate"
   params:
     - name: id
-      value: ""
+      value: 083fb223-c63a-4721-8dd2-ebc8ca0723bc
       type: path
       description: Plan ID
   body:
     type: json
     data: |-
       {
-        "comment": "",
-        "revision": 0,
-        "version": 0
+        "comment": "comment 2",
+        "revision": 3,
+        "version": 1
       }
   auth: inherit
 

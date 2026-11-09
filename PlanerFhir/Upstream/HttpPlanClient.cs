@@ -33,6 +33,36 @@ public sealed class HttpPlanClient(HttpClient http, IHttpContextAccessor accesso
         return await res.Content.ReadFromJsonAsync<List<HistoryEvent>>(ct) ?? [];
     }
 
+    public async Task<CommandResult> ExecuteAsync(string id, string command, CommandRequest r, CancellationToken ct)
+    {
+        var body = new Dictionary<string, object?> { ["comment"] = r.Comment ?? "", ["revision"] = r.Revision };
+        if (r.Version is { } v) body["version"] = v;
+        var req = new HttpRequestMessage(HttpMethod.Post, $"plan/{Uri.EscapeDataString(id)}/{command}")
+        {
+            Content = JsonContent.Create(body),
+        };
+        var auth = accessor.HttpContext?.Request.Headers.Authorization.ToString();
+        if (!string.IsNullOrEmpty(auth)) req.Headers.TryAddWithoutValidation("Authorization", auth);
+
+        using var res = await http.SendAsync(req, ct);
+        if (!res.IsSuccessStatusCode)
+        {
+            string? code = null, details = null;
+            try
+            {
+                using var doc = JsonDocument.Parse(await res.Content.ReadAsStringAsync(ct));
+                code = doc.RootElement.TryGetProperty("code", out var c) ? c.ToString() : null;
+                details = doc.RootElement.TryGetProperty("details", out var d) ? d.ToString() : null;
+                if (string.IsNullOrWhiteSpace(details) && doc.RootElement.TryGetProperty("error", out var e)) details = e.ToString();
+            }
+            catch (JsonException) { }
+            throw new UpstreamException(
+                string.IsNullOrWhiteSpace(details) ? $"Planer API returned {(int)res.StatusCode} {res.ReasonPhrase}" : details,
+                (int)res.StatusCode, code);
+        }
+        return await res.Content.ReadFromJsonAsync<CommandResult>(ct) ?? new CommandResult(id, r.Revision);
+    }
+
     private async Task<IReadOnlyList<Plan>> GetListAsync(string url, CancellationToken ct)
     {
         using var res = await SendAsync(url, ct);
