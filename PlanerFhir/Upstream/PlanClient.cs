@@ -7,7 +7,7 @@ namespace PlanerFhir.Upstream;
 
 /// <summary>Calls the real Planer API (GET /plan, /plan/:id, /plan/:id/history, /plan/:id/version/:v).
 /// The caller's Authorization header is forwarded as-is.</summary>
-public sealed class HttpPlanClient(HttpClient http, IHttpContextAccessor accessor) : IPlanClient
+public sealed class PlanClient(HttpClient http, IHttpContextAccessor accessor) : IPlanClient
 {
     public async Task<IReadOnlyList<Plan>> SearchAsync(PlanQuery q, CancellationToken ct)
     {

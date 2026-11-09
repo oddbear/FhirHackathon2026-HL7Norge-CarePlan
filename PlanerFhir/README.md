@@ -53,8 +53,7 @@ otherwise `draft`. Approval status `given` (also `approved`) maps to a completed
 
 ## Configuration (`appsettings.json`)
 
-- `Upstream:Mode` = `Http` (default) or `Mock` (offline sample data). With `Http`, requests go to `Upstream:BaseUrl`
-  (`https://planer.dev.nhn.no/api/personnel`) and the caller's `Authorization` header is forwarded.
+- `Upstream:BaseUrl` (`https://planer.dev.nhn.no/api/personnel`): every request goes to this real API and the caller's `Authorization` header is forwarded.
 - `Fhir:BaseUrl` — used for code system URLs. `Fhir:NinSystem` / `HprSystem` — identifier systems.
 
 ## Caveats
@@ -84,7 +83,7 @@ The upstream has no template resource, so this is not read from it. Every `CareP
 | `note[0].text` | `comment` |
 | contained `ServiceRequest`: `category.coding.code` green/yellow/red, `code.text`, `reason.concept.text` | `clinical_content.zones[]` level, action, condition |
 
-Invalid content gives `422`, upstream 400/409/422 map to the same status, other upstream errors to `502`. Create always goes to the real Planer API; in mock mode (`Upstream__Mode=Mock`) it answers `501`. The default mode in `appsettings.json` is `Http`, so a create really creates a plan on `planer.dev.nhn.no`.
+Invalid content gives `422`, upstream 400/409/422 map to the same status, other upstream errors to `502`. Create really creates a plan in the upstream (`planer.dev.nhn.no` by default).
 
 ## Operations (state changes)
 
@@ -106,5 +105,4 @@ the current plan version, read the same way. A successful call returns the updat
 Upstream errors keep their meaning: 400 → 400 `invalid`, 404 → 404, 409 → 409 `conflict` (stale revision),
 422 → 422 `business-rule`, anything else → 502. The caller's `Authorization` header is forwarded.
 
-In Mock mode the operations check the revision and succeed, but they do not change the sample data.
 Reject, request approval, unpublish and deactivate are not exposed yet.
