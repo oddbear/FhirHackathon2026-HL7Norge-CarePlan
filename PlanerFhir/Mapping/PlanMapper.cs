@@ -54,6 +54,8 @@ public sealed class PlanMapper(Microsoft.Extensions.Options.IOptions<FhirOptions
 
     private string ZoneSystem => $"{_o.BaseUrl}/CodeSystem/plan-zone";
     private string PlanSystemUrl => _o.PlanSystem;
+    public const string PlanDefinitionId = "personal-plan";
+    private string PlanDefinitionUrl => $"{_o.BaseUrl}/PlanDefinition/{PlanDefinitionId}";
 
     // ---- ids ---------------------------------------------------------------------------------
 
@@ -128,6 +130,7 @@ public sealed class PlanMapper(Microsoft.Extensions.Options.IOptions<FhirOptions
             Identifier = [new Identifier(PlanSystemUrl, p.Id)],
             Status = IsActive(p) ? RequestStatus.Active : RequestStatus.Draft,
             Intent = CarePlan.CarePlanIntent.Plan,
+            InstantiatesCanonical = [PlanDefinitionUrl],
             Category = [Cc("http://snomed.info/sct", "734163000", "Care plan")],
             Title = p.ClinicalContent.Title,
             Description = p.ClinicalContent.PersonalGoals,
@@ -321,6 +324,56 @@ public sealed class PlanMapper(Microsoft.Extensions.Options.IOptions<FhirOptions
     }
 
     // ---- helpers -----------------------------------------------------------------------------
+
+    // ---- PlanDefinition ----------------------------------------------------------------------
+    // The upstream has no template resource; the structure of a plan (personal goals + one zone per
+    // level, each with condition/action) is fixed, so the definition is described statically here.
+
+    public static IReadOnlyList<string> PlanDefinitionIds => [PlanDefinitionId];
+
+    public PlanDefinition MapPlanDefinition()
+    {
+        PlanDefinition.ActionComponent Zone(string level, string desc, string priority) => new()
+        {
+            ElementId = level,
+            Title = ZoneDisplay(level),
+            Description = desc,
+            Priority = priority switch { "asap" => RequestPriority.Asap, "urgent" => RequestPriority.Urgent, _ => RequestPriority.Routine },
+            Code = Cc(ZoneSystem, level, ZoneDisplay(level)),
+            Condition = [new PlanDefinition.ConditionComponent
+            {
+                Kind = ActionConditionKind.Applicability,
+                Expression = new Expression { Language = "text/plain", Description = "Condition (tilstand) described for the zone in the plan" },
+            }],
+            Definition = new Canonical("http://hl7.org/fhir/StructureDefinition/ServiceRequest"),
+            Type = Cc("http://terminology.hl7.org/CodeSystem/action-type", "create", "Create"),
+        };
+
+        return new PlanDefinition
+        {
+            Id = PlanDefinitionId,
+            Url = PlanDefinitionUrl,
+            Identifier = [new Identifier(PlanSystemUrl, "definition:" + PlanDefinitionId)],
+            Version = "1",
+            Name = "PersonalPlan",
+            Title = "Personlig plan",
+            Status = PublicationStatus.Active,
+            Experimental = false,
+            Type = Cc("http://terminology.hl7.org/CodeSystem/plan-definition-type", "clinical-protocol", "Clinical Protocol"),
+            Description = "Structure of a personal plan: personal goals and a green, yellow and red zone, each with a condition and the actions to take.",
+            Goal =
+            [
+                new PlanDefinition.GoalComponent
+                {
+                    Category = Cc("http://terminology.hl7.org/CodeSystem/goal-category", "patient", "Patient"),
+                    Description = new CodeableConcept { Text = "Personlige mål (clinical_content.personal_goals)" },
+                },
+            ],
+            Action = [Zone("green", "Ingen eller lite symptomer. Fortsett som planlagt.", "routine"),
+                      Zone("yellow", "Økende symptomer. Følg tiltakene i planen.", "urgent"),
+                      Zone("red", "Alvorlige symptomer. Kontakt helsepersonell umiddelbart.", "asap")],
+        };
+    }
 
     private static CodeableConcept Cc(string system, string code, string display) =>
         new() { Coding = [new Coding(system, code, display)], Text = display };

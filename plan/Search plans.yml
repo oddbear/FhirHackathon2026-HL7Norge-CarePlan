@@ -1,0 +1,154 @@
+info:
+  name: Search plans
+  type: http
+  seq: 1
+  tags:
+    - plan
+
+http:
+  method: GET
+  url: "{{baseUrl}}/plan?patient={{nin}}"
+  params:
+    - name: patient
+      value: "{{nin}}"
+      type: query
+      description: Patient NIN (required)
+    - name: is_active
+      value: "true"
+      type: query
+      description: Filter by active status (true/false)
+      disabled: true
+    - name: updated_since
+      value: ""
+      type: query
+      description: Filter by updated since (RFC3339 timestamp)
+      disabled: true
+    - name: published
+      value: ""
+      type: query
+      description: Filter by publication status (true/false)
+      disabled: true
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+examples:
+  - name: 200 Response
+    description: OK
+    request:
+      url: "{{baseUrl}}/plan"
+      method: GET
+      params:
+        - name: patient
+          value: ""
+          type: query
+          description: Patient NIN (required)
+        - name: is_active
+          value: ""
+          type: query
+          description: Filter by active status (true/false)
+          disabled: true
+        - name: updated_since
+          value: ""
+          type: query
+          description: Filter by updated since (RFC3339 timestamp)
+          disabled: true
+        - name: published
+          value: ""
+          type: query
+          description: Filter by publication status (true/false)
+          disabled: true
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: "[]"
+  - name: 400 Response
+    description: Bad Request
+    request:
+      url: "{{baseUrl}}/plan"
+      method: GET
+      params:
+        - name: patient
+          value: ""
+          type: query
+          description: Patient NIN (required)
+        - name: is_active
+          value: ""
+          type: query
+          description: Filter by active status (true/false)
+          disabled: true
+        - name: updated_since
+          value: ""
+          type: query
+          description: Filter by updated since (RFC3339 timestamp)
+          disabled: true
+        - name: published
+          value: ""
+          type: query
+          description: Filter by publication status (true/false)
+          disabled: true
+    response:
+      status: 400
+      statusText: Bad Request
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "code": "",
+            "details": "",
+            "error": ""
+          }
+  - name: 500 Response
+    description: Internal Server Error
+    request:
+      url: "{{baseUrl}}/plan"
+      method: GET
+      params:
+        - name: patient
+          value: ""
+          type: query
+          description: Patient NIN (required)
+        - name: is_active
+          value: ""
+          type: query
+          description: Filter by active status (true/false)
+          disabled: true
+        - name: updated_since
+          value: ""
+          type: query
+          description: Filter by updated since (RFC3339 timestamp)
+          disabled: true
+        - name: published
+          value: ""
+          type: query
+          description: Filter by publication status (true/false)
+          disabled: true
+    response:
+      status: 500
+      statusText: Internal Server Error
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "code": "",
+            "details": "",
+            "error": ""
+          }
+
+docs: Search for plans by patient NIN with optional filters.

@@ -1,0 +1,4 @@
+name: Environment
+variables:
+  - name: baseUrl
+    value: https://planer.dev.nhn.no/api/personnel

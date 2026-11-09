@@ -64,3 +64,10 @@ otherwise `draft`. Approval status `given` (also `approved`) maps to a completed
 - Each search downloads the patient's full plan list upstream, so very large patients are slow; consider caching.
 - The NIN is a query parameter (as upstream requires); the `self` link redacts it, but access logs will contain it.
 - Output has been parsed/serialised by the SDK but not run through the HL7 validator.
+
+## PlanDefinition
+
+`GET /fhir/PlanDefinition` and `GET /fhir/PlanDefinition/personal-plan` return a static definition of the plan
+structure: personal goals plus a green, yellow and red zone, each with a condition and a `ServiceRequest` action.
+The upstream has no template resource, so this is not read from it. Every `CarePlan` references it in
+`instantiatesCanonical`. No patient parameter is needed, and there is no upstream call.

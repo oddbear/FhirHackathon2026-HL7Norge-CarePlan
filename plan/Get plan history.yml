@@ -1,0 +1,94 @@
+info:
+  name: Get plan history
+  type: http
+  seq: 14
+  tags:
+    - plan
+
+http:
+  method: GET
+  url: "{{baseUrl}}/plan/:id/history"
+  params:
+    - name: id
+      value: 602c59a6-4be9-46b8-a123-502c5e226b6b
+      type: path
+      description: Plan ID
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+examples:
+  - name: 200 Response
+    description: OK
+    request:
+      url: "{{baseUrl}}/plan/:id/history"
+      method: GET
+      params:
+        - name: id
+          value: ""
+          type: path
+          description: Plan ID
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: "[]"
+  - name: 400 Response
+    description: Bad Request
+    request:
+      url: "{{baseUrl}}/plan/:id/history"
+      method: GET
+      params:
+        - name: id
+          value: ""
+          type: path
+          description: Plan ID
+    response:
+      status: 400
+      statusText: Bad Request
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "code": "",
+            "details": "",
+            "error": ""
+          }
+  - name: 500 Response
+    description: Internal Server Error
+    request:
+      url: "{{baseUrl}}/plan/:id/history"
+      method: GET
+      params:
+        - name: id
+          value: ""
+          type: path
+          description: Plan ID
+    response:
+      status: 500
+      statusText: Internal Server Error
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "code": "",
+            "details": "",
+            "error": ""
+          }
+
+docs: Retrieve the revision history of a plan by its ID.

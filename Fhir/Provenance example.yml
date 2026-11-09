@@ -1,0 +1,26 @@
+info:
+  name: Provenance example
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: http://localhost:5080/fhir/Provenance?patient={{nin}}&_count=20&_offset=20
+  params:
+    - name: patient
+      value: "{{nin}}"
+      type: query
+    - name: _count
+      value: "20"
+      type: query
+    - name: _offset
+      value: "20"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

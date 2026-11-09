@@ -1,0 +1,160 @@
+info:
+  name: Get latest plan
+  type: http
+  seq: 9
+  tags:
+    - plan
+
+http:
+  method: GET
+  url: "{{baseUrl}}/plan/:id/$latest"
+  params:
+    - name: id
+      value: ""
+      type: path
+      description: Plan ID
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+examples:
+  - name: 200 Response
+    description: OK
+    request:
+      url: "{{baseUrl}}/plan/:id/$latest"
+      method: GET
+      params:
+        - name: id
+          value: ""
+          type: path
+          description: Plan ID
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "active_version": 0,
+            "approvals": [
+              {
+                "status": "requested",
+                "updated_at": "",
+                "version": 0
+              }
+            ],
+            "clinical_content": {
+              "personal_goals": "",
+              "title": "",
+              "zones": [
+                {
+                  "action": "",
+                  "condition": "",
+                  "level": "green"
+                }
+              ]
+            },
+            "comment": "",
+            "id": "",
+            "publication_status": [
+              {
+                "provider_id": "",
+                "status": "published",
+                "updated_at": "",
+                "version": 0
+              }
+            ],
+            "revision": 0,
+            "subject": {
+              "nin": ""
+            },
+            "updated_at": "",
+            "updated_by": {
+              "display_name": "",
+              "hpr_number": "",
+              "nin": ""
+            },
+            "version": 0
+          }
+  - name: 400 Response
+    description: Bad Request
+    request:
+      url: "{{baseUrl}}/plan/:id/$latest"
+      method: GET
+      params:
+        - name: id
+          value: ""
+          type: path
+          description: Plan ID
+    response:
+      status: 400
+      statusText: Bad Request
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "code": "",
+            "details": "",
+            "error": ""
+          }
+  - name: 404 Response
+    description: Not Found
+    request:
+      url: "{{baseUrl}}/plan/:id/$latest"
+      method: GET
+      params:
+        - name: id
+          value: ""
+          type: path
+          description: Plan ID
+    response:
+      status: 404
+      statusText: Not Found
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "code": "",
+            "details": "",
+            "error": ""
+          }
+  - name: 500 Response
+    description: Internal Server Error
+    request:
+      url: "{{baseUrl}}/plan/:id/$latest"
+      method: GET
+      params:
+        - name: id
+          value: ""
+          type: path
+          description: Plan ID
+    response:
+      status: 500
+      statusText: Internal Server Error
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          {
+            "code": "",
+            "details": "",
+            "error": ""
+          }
+
+docs: Retrieve the latest version of a plan by its ID.

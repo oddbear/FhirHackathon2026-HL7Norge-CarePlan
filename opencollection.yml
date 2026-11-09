@@ -1,0 +1,32 @@
+opencollection: 1.0.0
+
+info:
+  name: Planer API - dev nhn
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  variables:
+    - name: baseUrl
+      value: https://planer.dev.nhn.no/api/personnel
+    - name: nin
+      value: "18679135941"
+
+docs:
+  content: API for managing plans with clinical content
+  type: text/markdown
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

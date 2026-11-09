@@ -25,6 +25,26 @@ public static class FhirEndpoints
 
         g.MapGet("/metadata", (HttpContext ctx) => Send(Capability(ctx)));
 
+        // ---- PlanDefinition: static definition of the plan structure (no upstream call) ---------------
+        g.MapGet("/PlanDefinition", (HttpContext ctx, PlanMapper mapper) =>
+        {
+            var def = mapper.MapPlanDefinition();
+            var bundle = new Bundle { Type = Bundle.BundleType.Searchset, Total = 1 };
+            bundle.Link.Add(new Bundle.LinkComponent { Relation = "self", Url = $"{BaseUrl(ctx)}/PlanDefinition" });
+            bundle.Entry.Add(new Bundle.EntryComponent
+            {
+                FullUrl = $"{BaseUrl(ctx)}/PlanDefinition/{def.Id}",
+                Resource = def,
+                Search = new Bundle.SearchComponent { Mode = Bundle.SearchEntryMode.Match },
+            });
+            return Send(bundle);
+        });
+
+        g.MapGet("/PlanDefinition/{id}", (string id, PlanMapper mapper) =>
+            id == PlanMapper.PlanDefinitionId
+                ? Send(mapper.MapPlanDefinition())
+                : Outcome(404, OperationOutcome.IssueType.NotFound, $"PlanDefinition/{id} not found"));
+
         // ---- search: GET /fhir/{type}?patient=...&status=...&_lastUpdated=...&published=... -------
         g.MapGet("/{type}", async (string type, HttpContext ctx, IPlanClient client, PlanMapper mapper, CancellationToken ct) =>
         {
@@ -292,6 +312,7 @@ public static class FhirEndpoints
                         Res("Composition", patient, status, lastUpdated),
                         Res("ServiceRequest", patient, status, lastUpdated),
                         Res("Task", patient, status, lastUpdated),
+                        Res("PlanDefinition"),
                         Res("Provenance", patient, ("target", SearchParamType.Reference), lastUpdated),
                     ],
                 },
