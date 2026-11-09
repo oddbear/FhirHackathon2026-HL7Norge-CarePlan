@@ -1,0 +1,33 @@
+info:
+  name: CarePlan publish
+  type: http
+  seq: 14
+
+http:
+  method: POST
+  url: http://localhost:5080/fhir/CarePlan/:id/$publish
+  params:
+    - name: id
+      value: 8526cf24-a37a-4b3f-b59c-a4479b75f901
+      type: path
+      description: Plan ID (CarePlan id)
+  headers:
+    - name: Content-Type
+      value: application/fhir+json
+  body:
+    type: json
+    data: |-
+      {
+        "resourceType": "Parameters",
+        "parameter": [
+          { "name": "comment", "valueString": "Publisert til kjernejournal" }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
