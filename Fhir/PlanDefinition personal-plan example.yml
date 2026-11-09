@@ -1,0 +1,29 @@
+info:
+  name: PlanDefinition personal-plan example
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: http://localhost:5080/fhir/PlanDefinition/personal-plan
+  params:
+    - name: patient
+      value: "{{nin}}"
+      type: query
+      disabled: true
+    - name: _count
+      value: "20"
+      type: query
+      disabled: true
+    - name: _offset
+      value: "20"
+      type: query
+      disabled: true
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
