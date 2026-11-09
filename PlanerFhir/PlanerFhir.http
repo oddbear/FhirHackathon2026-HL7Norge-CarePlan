@@ -63,7 +63,7 @@ GET {{host}}/Task/{{plan}}-approval-2
 GET {{host}}/Provenance/{{plan}}-rev-2
 
 ### PlanDefinition (static definition of the plan structure; CarePlan.instantiatesCanonical points here)
-GET {{baseUrl}}/fhir/PlanDefinition
+GET {{host}}/PlanDefinition
 
 ###
-GET {{baseUrl}}/fhir/PlanDefinition/personal-plan
+GET {{host}}/PlanDefinition/personal-plan
