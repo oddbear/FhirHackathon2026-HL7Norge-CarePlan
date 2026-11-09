@@ -53,8 +53,7 @@ public sealed class MockPlanClient : IPlanClient
         PublicationStatus = [],
     };
 
-    private static readonly List<Plan> Store = [ActiveV2, Draft];
-    private static Plan[] All { get { lock (Store) return [.. Store]; } }
+    private static readonly Plan[] All = [ActiveV2, Draft];
 
     public Task<IReadOnlyList<Plan>> SearchAsync(PlanQuery q, CancellationToken ct)
     {
@@ -88,19 +87,9 @@ public sealed class MockPlanClient : IPlanClient
         return Task.FromResult(ev);
     }
 
-    // Offline stub: creates the plan in memory (lost on restart).
-    public Task<CommandResult> CreateAsync(CreatePlanRequest r, CancellationToken ct)
-    {
-        var plan = new Plan
-        {
-            Id = Guid.NewGuid().ToString(), Version = 1, Revision = 1, IsActive = false,
-            Subject = r.Subject, UpdatedAt = DateTimeOffset.UtcNow, UpdatedBy = Nurse,
-            Comment = r.Comment, ClinicalContent = r.ClinicalContent,
-            Approvals = [], PublicationStatus = [],
-        };
-        lock (Store) Store.Add(plan);
-        return Task.FromResult(new CommandResult(plan.Id, plan.Revision));
-    }
+    // Creating is never faked: use Upstream__Mode=Http to create plans in the real Planer API.
+    public Task<CommandResult> CreateAsync(CreatePlanRequest r, CancellationToken ct) =>
+        throw new UpstreamException("Creating plans needs the real Planer API: run with Upstream__Mode=Http.", 501, "not_supported");
 
     // Offline stub: checks the revision like the real API would, but does not change the sample data.
     public Task<CommandResult> ExecuteAsync(string id, string command, CommandRequest r, CancellationToken ct)

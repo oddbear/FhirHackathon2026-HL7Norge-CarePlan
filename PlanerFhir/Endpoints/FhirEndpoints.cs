@@ -208,6 +208,7 @@ public static class FhirEndpoints
                     400 => Outcome(400, OperationOutcome.IssueType.Invalid, e.Message),
                     409 => Outcome(409, OperationOutcome.IssueType.Conflict, e.Message),
                     422 => Outcome(422, OperationOutcome.IssueType.BusinessRule, e.Message),
+                    501 => Outcome(501, OperationOutcome.IssueType.NotSupported, e.Message),
                     _ => Outcome(502, OperationOutcome.IssueType.Transient, e.Message),
                 };
             }

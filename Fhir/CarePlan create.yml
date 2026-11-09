@@ -16,26 +16,19 @@ http:
         "resourceType": "CarePlan",
         "status": "draft",
         "intent": "plan",
-        "title": "Egenbehandlingsplan astma",
-        "description": "Delta i fotballtrening",
+        "title": "title",
+        "description": "personal_goals",
         "subject": {
-          "identifier": { "system": "urn:oid:2.16.578.1.12.4.1.4.1", "value": "18679135941" }
+          "identifier": { "system": "urn:oid:2.16.578.1.12.4.1.4.1", "value": "01660188378" }
         },
-        "note": [ { "text": "Første utkast" } ],
+        "note": [ { "text": "comment" } ],
         "contained": [
           {
             "resourceType": "ServiceRequest", "id": "z1", "status": "draft", "intent": "plan",
-            "subject": { "display": "pasient" },
+            "subject": { "display": "patient" },
             "category": [ { "coding": [ { "code": "green" } ] } ],
-            "code": { "concept": { "text": "Vanlig medisinering" } },
-            "reason": [ { "concept": { "text": "Stabil pust" } } ]
-          },
-          {
-            "resourceType": "ServiceRequest", "id": "z2", "status": "draft", "intent": "plan",
-            "subject": { "display": "pasient" },
-            "category": [ { "coding": [ { "code": "red" } ] } ],
-            "code": { "concept": { "text": "Ring 113" } },
-            "reason": [ { "concept": { "text": "Kan ikke snakke i hele setninger" } } ]
+            "code": { "concept": { "text": "action" } },
+            "reason": [ { "concept": { "text": "conditio" } } ]
           }
         ]
       }
@@ -48,4 +41,4 @@ settings:
   maxRedirects: 5
   forwardAuthorizationHeader: false
 
-docs: Creates a plan (upstream POST /plan). Zones are contained ServiceRequests with category code green, yellow or red, code.text as action and reason.concept.text as condition. Returns 201 with the CarePlan.
+docs: Same as plan/Create a new plan, in FHIR form. Creates a plan (upstream POST /plan). Zones are contained ServiceRequests with category code green, yellow or red, code.text as action and reason.concept.text as condition. Returns 201 with the CarePlan.

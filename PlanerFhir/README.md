@@ -84,7 +84,7 @@ The upstream has no template resource, so this is not read from it. Every `CareP
 | `note[0].text` | `comment` |
 | contained `ServiceRequest`: `category.coding.code` green/yellow/red, `code.text`, `reason.concept.text` | `clinical_content.zones[]` level, action, condition |
 
-Invalid content gives `422`, upstream 400/409/422 map to the same status, other upstream errors to `502`. In mock mode the plan is kept in memory only.
+Invalid content gives `422`, upstream 400/409/422 map to the same status, other upstream errors to `502`. Create always goes to the real Planer API; in mock mode (`Upstream__Mode=Mock`) it answers `501`. The default mode in `appsettings.json` is `Http`, so a create really creates a plan on `planer.dev.nhn.no`.
 
 ## Operations (state changes)
 
