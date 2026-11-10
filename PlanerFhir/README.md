@@ -1,14 +1,44 @@
 # Planer FHIR R5 facade
 
-ASP.NET Core (.NET 10) API that exposes the plans from the Bruno collection **Planer API – dev nhn**
-(`GET /plan`, `/plan/:id`, `/plan/:id/history`, `/plan/:id/version/:v`) as **FHIR R5** (Firely SDK `Hl7.Fhir.R5`).
-Read/search only; the collection's write operations (`$activate`, `$approval-*`, ...) are not exposed.
+> **Proof of concept.** This project was made for the **HL7 Norge FHIR hackathon 2026**. It is a demonstration of
+> how the Planer API could be offered as FHIR. It is not a production service, it is not conformant to a Norwegian
+> FHIR profile, and it has not been through the HL7 validator.
 
-```bash
-dotnet run          # http://localhost:5080/fhir/metadata, calls the real dev upstream by default
+## What it is
+
+The Planer API ("API for managing plans with clinical content", the Bruno collection **Planer API - dev nhn**) is
+the service behind personal action plans (*egenbehandlingsplaner*) with a personal goal and green, yellow and red zones,
+an approval flow and publication to the patient's view. It has its own JSON API at
+`https://planer.dev.nhn.no/api/personnel`.
+
+This project is a **facade**: an ASP.NET Core (.NET 10) service that sits in front of that API and translates it to
+**FHIR R5** (Firely SDK `Hl7.Fhir.R5`, `application/fhir+json`). It has no database and no state of its own. Every
+FHIR request is turned into calls to the upstream, and the answer is mapped back to FHIR resources.
+
+```text
+FHIR client  ->  Planer FHIR facade  ->  Planer API (planer.dev.nhn.no/api/personnel)
+              FHIR R5 (/fhir)          its own JSON API (/plan, /plan/:id, ...)
 ```
 
-Requests to try are in `PlanerFhir.http`.
+The services it translates, with the upstream calls they use:
+
+| Upstream service (Bruno `plan/`)                                  | Through the facade                                           |
+|-------------------------------------------------------------------|--------------------------------------------------------------|
+| `GET /plan`, `/plan/:id`, `/plan/:id/version/:v`                  | Search and read of `CarePlan`, `Composition`, `ServiceRequest`, `Task`, `Practitioner`, `Patient`; `vread` |
+| `GET /plan/:id/history`                                           | `Provenance`                                                 |
+| `POST /plan`                                                      | `POST /fhir/CarePlan` (create)                               |
+| `POST /plan/:id/$activate`, `$approval-given`, `$mark-published`  | FHIR operations `$activate`, `$approve`, `$publish` on `CarePlan` |
+| (none: the upstream has no templates)                             | A static `PlanDefinition` describing the plan structure      |
+
+Not exposed yet: update of plan content, reject, request approval, unpublish, deactivate, and the `active`/`latest`/`current`
+reads as separate endpoints.
+
+```bash
+dotnet run          # http://localhost:5080/fhir/metadata, calls the real dev upstream
+```
+
+Requests to try are in `PlanerFhir.http`, and Bruno requests are in the `Fhir/` folder of the collection. There is no
+mock mode: every call goes to the real upstream, including create and the operations, which change real data.
 
 ## Mapping
 
@@ -59,7 +89,8 @@ otherwise `draft`. Approval status `given` (also `approved`) maps to a completed
 ## Caveats
 
 - The `urn:example:*` systems and `<BaseUrl>/CodeSystem/*` are placeholders — replace with your real ones.
-- The dev API currently needs no auth; if that changes, the caller's `Authorization` header is forwarded.
+- The facade does no authentication or authorisation of its own. It forwards the caller's `Authorization` header to the upstream.
+- The FHIR modelling is a proposal made for the hackathon (for example plan → `CarePlan` + `Composition`, approval → `Task`); it is not agreed with the owners of the Planer API.
 - Each search downloads the patient's full plan list upstream, so very large patients are slow; consider caching.
 - The NIN is a query parameter (as upstream requires); the `self` link redacts it, but access logs will contain it.
 - Output has been parsed/serialised by the SDK but not run through the HL7 validator.

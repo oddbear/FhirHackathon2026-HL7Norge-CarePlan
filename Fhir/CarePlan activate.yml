@@ -6,14 +6,14 @@ info:
 http:
   method: POST
   url: http://localhost:5080/fhir/CarePlan/:id/$activate
+  headers:
+    - name: Content-Type
+      value: application/fhir+json
   params:
     - name: id
       value: 8526cf24-a37a-4b3f-b59c-a4479b75f901
       type: path
       description: Plan ID (CarePlan id)
-  headers:
-    - name: Content-Type
-      value: application/fhir+json
   body:
     type: json
     data: |-
@@ -21,7 +21,7 @@ http:
         "resourceType": "Parameters",
         "parameter": [
           { "name": "comment", "valueString": "Aktiverer planen" },
-          { "name": "revision", "valueInteger": 1 },
+          { "name": "revision", "valueInteger": 3 },
           { "name": "version", "valueInteger": 1 }
         ]
       }
